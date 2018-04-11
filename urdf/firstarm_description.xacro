@@ -1,0 +1,179 @@
+<?xml version="1.0"?>
+
+<!-- Description of Robot -->
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="first_arm">
+
+	<xacro:property name="bottom_radius" value="0.1" />
+	<xacro:property name="bottom_height" value="0.05" />
+	<xacro:property name="big_arm_length" value="0.25" />
+	<xacro:property name="big_arm_radius" value="0.04" />
+	<xacro:property name="small_arm_length" value="0.2" />
+	<xacro:property name="small_arm_radius" value="0.03" />
+	<xacro:property name="my_Pi" value="3.1415926" />
+	<xacro:property name="deg_to_rad" value="0.01745329251994329577"/>
+	<xacro:macro name="inertial_matrix" params="mass">
+               <inertial>
+                       <mass value="${mass}" />
+                       <inertia ixx="0.5" ixy="0.0" ixz="0.0"
+                                iyy="0.5" iyz="0.0"
+                                izz="0.5" />
+               </inertial>
+	</xacro:macro>
+
+  <link name="base_link">
+
+    <visual>
+	<geometry>
+	  <cylinder length="${bottom_height}" radius="${bottom_radius}" />
+	</geometry>
+	<origin rpy="0 0 0" xyz="0 0 0" />
+	<material name="yellow">
+	  <color rgba="1 1 0 1" />
+	</material>
+    </visual>
+
+    <collision>
+	<geometry>
+	  <cylinder length="${bottom_height}" radius="${bottom_radius}" />
+	</geometry>
+	<origin rpy="0 0 0" xyz="0 0 0" />
+    </collision>
+    <xacro:inertial_matrix mass="1" />
+
+  </link>
+    
+  <joint name="base_joint" type="revolute">
+    <parent link="base_link" />
+    <child link="big_arm" />
+    <origin xyz="0 0 ${bottom_height/2}" />
+    <axis xyz="0 0 ${bottom_height/2}" />
+    <limit effort="300" velocity="0.1" lower="-3.14" upper="3.14"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <link name="big_arm">
+    <visual>
+	<geometry>
+	  <cylinder length="${big_arm_length}" radius="${big_arm_radius}" />
+	</geometry>
+	<origin xyz="0 0 ${big_arm_length/2}" rpy="0 0 0" />
+	<material name="red">
+	  <color rgba="1 0 0 1" />
+	</material>
+    </visual>
+    <collision>
+	<geometry>
+	  <cylinder length="${big_arm_length}" radius="${big_arm_radius}" />
+	</geometry>
+	<origin xyz="0 0 ${big_arm_length/2}" rpy="0 0 0" />
+    </collision>
+
+    <xacro:inertial_matrix mass="1" />
+  </link>
+
+  <joint name="link_joint_before" type="revolute">
+    <parent link="big_arm" />
+    <child link="guan_jie" />
+    <origin xyz="0 0 ${big_arm_length}" rpy="0 ${my_Pi/2} 0"/>
+    <axis xyz="0 0 ${big_arm_length}" />
+    <limit effort="300" velocity="0.1" lower="-3.14" upper="3.14"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <link name="guan_jie">
+    <visual>
+	<geometry>
+	  <sphere radius="${big_arm_radius}" />
+	</geometry>
+	<origin xyz="-${big_arm_radius} 0 0" rpy="0 0 0" />
+	<material name="yellow">
+	  <color rgba="1 1 0 1" />
+	</material>
+    </visual>
+
+    <collision>
+	<geometry>
+	  <sphere radius="${big_arm_radius}" />
+	</geometry>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+    </collision>
+    <xacro:inertial_matrix mass="1" />
+  </link>
+
+  <joint name="link_joint_after" type="revolute">
+    <parent link="guan_jie" />
+    <child link="small_arm" />
+    <origin xyz="-${big_arm_radius*2} 0 0" />
+    <axis xyz="-${big_arm_radius*2} 0 0" />
+    <limit effort="300" velocity="0.1" lower="-3.14" upper="3.14"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <link name="small_arm">
+    <visual>
+	<geometry>
+	  <cylinder length="${small_arm_length}" radius="${small_arm_radius}" />
+	</geometry>
+	<origin xyz="-${small_arm_length/2} 0 0" rpy="0 ${my_Pi/2} 0" />
+	<material name="red">
+	  <color rgba="1 0 0 1" />
+	</material>
+    </visual>
+    <collision>
+	<geometry>
+	  <cylinder length="${small_arm_length}" radius="${small_arm_radius}" />
+	</geometry>
+	<origin xyz="0 0 ${small_arm_length/2}" rpy="0 0 0" />
+    </collision>
+    <xacro:inertial_matrix mass="1" />
+  </link>
+
+<!-- Gazebo Reference -->
+  <gazebo reference="base_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <gazebo reference="big_arm">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="guan_jie">
+    <material>Gazebo/Yellow</material>
+  </gazebo>
+
+  <gazebo reference="small_arm">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+<!-- Transmission Tag -->
+  <xacro:macro name="transmission_block" params="joint_name">
+    <transmission name="tran1">
+	<type>transmission_interface/SimpleTransmission</type>
+	<joint name="${joint_name}">
+	  <hardwareInterface>PositionJointInterface</hardwareInterface>
+	</joint>
+	<actuator name="motor1">
+	  <mechanicalReduction>1</mechanicalReduction>
+	</actuator>
+    </transmission>
+  </xacro:macro>
+
+<!-- Ros Control Plugin -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+	<robotNamespace>/first_arm</robotNamespace>
+    </plugin>
+  </gazebo>
+
+<!-- Camera -->
+  <xacro:include filename="$(find first_arm)/urdf/sensors/xtion_pro_live.urdf.xacro" />
+
+  <xacro:xtion_pro_live name="rgbd_camera" parent="base">
+    <origin xyz="0.1 0 1" rpy="0 ${75.0 * deg_to_rad} 0"/>
+    <origin xyz="0 0 0" rpy="${-90.0 * deg_to_rad} 0 ${-90.0 * deg_to_rad}"/>
+  </xacro:xtion_pro_live>
+
+
+
+
+</robot>
