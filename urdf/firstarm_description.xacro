@@ -20,6 +20,37 @@
                </inertial>
 	</xacro:macro>
 
+  <joint name="bottom_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <child link="base_link"/>
+    <parent link="bottom_link"/>
+  </joint>
+
+  <link name="bottom_link">
+
+    <visual>
+      <origin xyz=" 0 0 -0.02"  rpy="0 0 0"/>
+      <geometry>
+
+	       <box size="1 1 0.02" />
+
+      </geometry>
+      <material name="Brown" />
+    </visual>
+
+    <collision>
+      <origin xyz=" 0 0 -0.02"  rpy="0 0 0"/>
+      <geometry>
+	       <box size="1 1 0.02" />
+      </geometry>
+      </collision>>
+
+  </link>
+
+  <gazebo reference="bottom_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
   <link name="base_link">
 
     <visual>
@@ -150,13 +181,17 @@
     <transmission name="tran1">
 	<type>transmission_interface/SimpleTransmission</type>
 	<joint name="${joint_name}">
-	  <hardwareInterface>PositionJointInterface</hardwareInterface>
+	  <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
 	</joint>
 	<actuator name="motor1">
 	  <mechanicalReduction>1</mechanicalReduction>
 	</actuator>
     </transmission>
   </xacro:macro>
+
+  <xacro:transmission_block joint_name="base_joint"/>
+  <xacro:transmission_block joint_name="link_joint_before"/>
+  <xacro:transmission_block joint_name="link_joint_after"/>
 
 <!-- Ros Control Plugin -->
   <gazebo>
